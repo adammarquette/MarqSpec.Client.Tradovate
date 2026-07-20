@@ -65,8 +65,17 @@ dotnet test --filter "Category=Integration"
 
 ### Branching
 
-`develop` → `staging` → `main`. Branch off `develop`; never branch off or PR directly into `main`.
-Branch names: `<type>/<work-item-id>_<title>` (`feature` | `bug` | `hotfix`).
+All new work branches off `develop` and PRs back into it — `develop` is the sole integration branch. Promotion
+is a one-way ladder with exactly one allowed source per step:
+
+| Target | Allowed source | Exception |
+|---|---|---|
+| `develop` | any `feature` / `bug` branch | — |
+| `staging` | **`develop` only** | allowed with a stated, good reason recorded in the PR |
+| `main` | **`staging` only** | **none** |
+
+Never branch off `main`, and never PR into it from anything but `staging`. Branch names:
+`<type>/<work-item-id>_<title>` (`feature` | `bug` | `hotfix`).
 
 ## Consuming this library
 
