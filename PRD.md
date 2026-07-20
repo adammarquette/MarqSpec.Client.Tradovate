@@ -144,8 +144,10 @@ seam. *That* is where the interface is identical to ProjectX's. See `trading-cop
 
 ### Development Metrics
 - **Unit Test Coverage**: minimum 95% line and 90% branch on all public methods
-- **Integration Test Coverage**: at least one integration test per public method against the live API,
-  configurable per environment — **demo host only** in CI
+- **Integration Test Coverage**: at least one integration test per public method against the **real API**
+  (nothing mocked), configurable per environment. **The demo host only — never the live host**, in CI or
+  locally. This library's test suite has no reason to reach a real-money venue; exercising the live host is a
+  production concern for the consuming platform, under its own practice-vs-live policy
 - **Code Quality**: SOLID; analyzer warnings at zero
 - **Documentation Alignment**: XML comments match the published API documentation
 
@@ -177,10 +179,14 @@ Provide a quick-start snippet showing:
 - Risk enforcement of any kind — this library transmits; it does not decide
 
 ## Open questions
-- **`Decide:` Partner API vs standard API.** Tradovate publishes a Partner API surface (`partner.tradovate.com`)
-  alongside the standard one (`api.tradovate.com`). The frame-protocol detail above was read from the Partner
-  docs, which serve staging URLs under a NinjaTrader domain. Confirm which surface prop-firm accounts (Apex,
-  TPT, TradeDay) actually authenticate against before fixing endpoints.
+- **`Decide:` Partner API vs standard API.** Two distinct *documentation* surfaces exist, and neither is an API
+  host — don't conflate them with the endpoints in *External Interfaces* above:
+  - `api.tradovate.com` — docs for the **standard** API, which is served from `{demo|live}.tradovateapi.com/v1`
+  - `partner.tradovate.com` — docs for a separate **Partner** API
+
+  The frame-protocol detail above came from the Partner docs, which serve staging URLs under a NinjaTrader
+  domain, so it may not describe the standard surface at all. Confirm which surface prop-firm accounts (Apex,
+  TPT, TradeDay) actually authenticate against — and which hosts that implies — before fixing endpoints.
 - **`Decide:` OSO/OCO semantics.** `placeOSO` and `placeOCO` are confirmed to exist but their exact request
   shape and bracket semantics need verification against live docs before the `BracketOrders` capability is
   claimed.
