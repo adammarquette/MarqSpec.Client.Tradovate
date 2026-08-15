@@ -73,7 +73,7 @@ seam. *That* is where the interface is identical to ProjectX's. See `trading-cop
      - Real-time updates surface as typed events (Observer pattern), mirroring the ProjectX client's ergonomics
 
 ## Technical Requirements
-- Implemented in C#, targeting .NET 10 (multi-target .NET 8.0 for parity with `MarqSpec.Client.ProjectX`)
+- Implemented in C#, targeting **.NET 10 only** (net10.0; no net8 multi-target — matches trading-copilot and Finnhub)
 - Asynchronous throughout; all public async methods accept `CancellationToken`
 - Configuration via the Options pattern, supporting environment variables and configuration files
 - **Dual-token lifecycle** is a first-class concern: `accessToken` (trading/account) and `mdAccessToken`
@@ -93,9 +93,11 @@ seam. *That* is where the interface is identical to ProjectX's. See `trading-cop
 - Failed WebSocket messages queued and retried, or reported to observers
 - Comprehensive unit tests; XML documentation on all public members
 - All classes, structs, and enums in separate files
+- File-scoped namespaces (build error if violated); `sealed` by default; `decimal` for prices/sizes on the public surface
+- `dotnet format --verify-no-changes` in CI — style drift fails the build
 
 ## Technology Stack and Dependencies
-- C# with .NET 10 (multi-targeting .NET 8.0)
+- C# with .NET 10 (net10.0 only)
 - Refit (minimum 7.0.0) — REST
 - `System.Net.WebSockets.ClientWebSocket` — Tradovate uses a bespoke frame protocol over raw WebSocket, **not**
   SignalR; there is no SignalR dependency in this client
@@ -133,7 +135,7 @@ seam. *That* is where the interface is identical to ProjectX's. See `trading-cop
   before transmitting an order. The client must never infer or silently fall back to the live host.
 
 ## Non-Functional Requirements
-- **Compatibility**: .NET 10 primary; .NET 8.0 multi-target
+- **Compatibility**: .NET 10 (net10.0 only)
 - **Deployment**: NuGet package with symbol packages
 - **Backward Compatibility**: SemVer 2.0
 - **Memory Efficiency**: no leaks across long-running dual-socket operation
@@ -165,10 +167,13 @@ seam. *That* is where the interface is identical to ProjectX's. See `trading-cop
 - **Retry Resilience**: transient failures (5xx, network timeouts) retried up to 3 times
 
 ## Example Usage
-Provide a quick-start snippet showing:
-1. DI registration against the **demo** host
-2. Account discovery and a REST call
-3. Subscribing to market-data and account updates across both sockets
+See the README quick-start and `MarqSpec.Client.Tradovate.Samples`. The sample:
+
+1. Registers DI against the **demo** host (`https://demo.tradovateapi.com/v1`) with no live fallback
+2. Lists accounts and calls `GET /auth/me`
+3. Connects both sockets, runs `user/syncrequest`, and listens for quotes / orders
+
+Historical bars are retrieved via `ITradovateWebSocketClient.GetHistoricalBarsAsync` (`md/getChart`). There is no REST bar endpoint.
 
 ## Out of Scope
 - UI components or visualization tools
