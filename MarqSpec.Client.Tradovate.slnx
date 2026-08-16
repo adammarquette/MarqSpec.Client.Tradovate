@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="MarqSpec.Client.Tradovate/MarqSpec.Client.Tradovate.csproj" />
+  <Project Path="MarqSpec.Client.Tradovate.Tests/MarqSpec.Client.Tradovate.Tests.csproj" />
+  <Project Path="MarqSpec.Client.Tradovate.Samples/MarqSpec.Client.Tradovate.Samples.csproj" />
+</Solution>
