@@ -55,6 +55,8 @@ public sealed class TradovateOptions
     /// </summary>
     /// <remarks>
     /// Demo: <c>https://demo.tradovateapi.com/v1</c>. Live: <c>https://live.tradovateapi.com/v1</c>.
+    /// A trailing slash is optional. Refit requires leading-slash routes, so the client re-applies this path
+    /// after URI combination so <c>/v1</c> is not dropped.
     /// </remarks>
     public string RestBaseUrl { get; set; } = string.Empty;
 

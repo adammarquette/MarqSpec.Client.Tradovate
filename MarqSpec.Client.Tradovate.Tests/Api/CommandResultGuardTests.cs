@@ -13,7 +13,7 @@ public sealed class CommandResultGuardTests
     [InlineData(FailureReason.UnknownReason)]
     public void EnsureSuccess_ShouldThrow_WhenFailureReasonIsNotSuccess(FailureReason reason)
     {
-        Action act = () => CommandResultGuard.EnsureSuccess(reason, "rejected", orderId: 99, operation: "placeOrder");
+        Action act = () => CommandResultGuard.EnsureSuccess(reason, "rejected", confirmationId: 99, operation: "placeOrder");
 
         TradovateApiException ex = act.Should().Throw<TradovateApiException>().Which;
         ex.FailureReason.Should().Be(reason);
@@ -25,7 +25,7 @@ public sealed class CommandResultGuardTests
     [Fact]
     public void EnsureSuccess_ShouldNotThrow_WhenFailureReasonIsSuccess()
     {
-        Action act = () => CommandResultGuard.EnsureSuccess(FailureReason.Success, null, orderId: 10, operation: "placeOrder");
+        Action act = () => CommandResultGuard.EnsureSuccess(FailureReason.Success, null, confirmationId: 10, operation: "placeOrder");
 
         act.Should().NotThrow();
     }
@@ -33,7 +33,7 @@ public sealed class CommandResultGuardTests
     [Fact]
     public void EnsureSuccess_ShouldThrow_WhenFailureReasonIsMissingAndOrderIdIsMissing()
     {
-        Action act = () => CommandResultGuard.EnsureSuccess(null, null, orderId: null, operation: "placeOrder", requireOrderId: true);
+        Action act = () => CommandResultGuard.EnsureSuccess(null, null, confirmationId: null, operation: "placeOrder", requireConfirmationId: true);
 
         act.Should().Throw<TradovateApiException>()
             .WithMessage("*placeOrder*")
@@ -43,7 +43,25 @@ public sealed class CommandResultGuardTests
     [Fact]
     public void EnsureSuccess_ShouldNotThrow_WhenFailureReasonIsMissingAndOrderIdIsPresent()
     {
-        Action act = () => CommandResultGuard.EnsureSuccess(null, null, orderId: 7, operation: "placeOrder", requireOrderId: true);
+        Action act = () => CommandResultGuard.EnsureSuccess(null, null, confirmationId: 7, operation: "placeOrder", requireConfirmationId: true);
+
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void EnsureSuccess_ShouldThrow_WhenFailureReasonAndCommandIdAreMissing()
+    {
+        Action act = () => CommandResultGuard.EnsureSuccess(null, null, confirmationId: null, operation: "liquidatePosition", requireConfirmationId: true);
+
+        act.Should().Throw<TradovateApiException>()
+            .WithMessage("*liquidatePosition*")
+            .Which.FailureReason.Should().BeNull();
+    }
+
+    [Fact]
+    public void EnsureSuccess_ShouldNotThrow_WhenCommandIdIsPresentAndFailureReasonIsMissing()
+    {
+        Action act = () => CommandResultGuard.EnsureSuccess(null, null, confirmationId: 42, operation: "liquidatePosition", requireConfirmationId: true);
 
         act.Should().NotThrow();
     }

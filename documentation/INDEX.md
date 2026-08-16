@@ -30,7 +30,7 @@ This library is a **Tradovate-native** client. Venue-neutrality lives in trading
 |---|---|---|
 | Host-selected environment | `TradovateOptions`, `ITradovateApiClient.ConfiguredHost` | PRD Technical Requirements; AGENTS safety rules |
 | Dual-token auth | `AuthenticationService` (`accessToken` + `mdAccessToken`) | PRD US-1; swagger `AccessTokenRequest` / `AccessTokenResponse` |
-| REST commands + `failureReason` | `TradovateApiClient`, `CommandResultGuard` | PRD "failed call must never deserialize into a success" |
+| REST commands + `failureReason` | `TradovateApiClient`, `CommandResultGuard` | PRD "failed call must never deserialize into a success"; absent `orderId`/`commandId` fails closed |
 | Never-retry place/liquidate | `CommandEndpoints`, `TradovateRetryHandler` | AGENTS safety rules; trading-copilot#41 |
 | Dual sockets + frames | `ITradovateWebSocketClient`, `FrameProtocol` | PRD US-5; official C# sample frame format |
 | Historical bars | `ITradovateWebSocketClient.GetHistoricalBarsAsync` (MD socket) | PRD US-3; no REST bar endpoint |

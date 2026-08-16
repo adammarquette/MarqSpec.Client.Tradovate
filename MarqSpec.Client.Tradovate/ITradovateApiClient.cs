@@ -127,7 +127,7 @@ public interface ITradovateApiClient
     Task<PlaceOcoResult> PlaceOcoAsync(PlaceOco request, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Modifies an existing order. Retried on 429 / 5xx / transport only. Throws when <c>failureReason</c> is not Success.
+    /// Modifies an existing order. Retried on 429 / 5xx / transport only. Throws when <c>failureReason</c> is not Success or when <c>commandId</c> is absent.
     /// </summary>
     /// <param name="request">The modify request.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
@@ -135,7 +135,7 @@ public interface ITradovateApiClient
     Task<CommandResult> ModifyOrderAsync(ModifyOrder request, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Cancels an existing order. Retried on 429 / 5xx / transport only. Throws when <c>failureReason</c> is not Success.
+    /// Cancels an existing order. Retried on 429 / 5xx / transport only. Throws when <c>failureReason</c> is not Success or when <c>commandId</c> is absent.
     /// </summary>
     /// <param name="request">The cancel request.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
@@ -165,7 +165,7 @@ public interface ITradovateApiClient
     Task<IReadOnlyList<Position>> GetPositionsAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Liquidates a position. Never retried. Throws when <c>failureReason</c> is not Success.
+    /// Liquidates a position. Never retried. Throws when <c>failureReason</c> is not Success or when <c>commandId</c> is absent.
     /// </summary>
     /// <param name="request">The liquidate request.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>

@@ -67,7 +67,13 @@ public static class ServiceCollectionExtensions
             {
                 TradovateOptions options = sp.GetRequiredService<IOptions<TradovateOptions>>().Value;
                 options.Validate();
-                client.BaseAddress = new Uri(options.RestBaseUrl);
+                client.BaseAddress = TradovateHttp.CreateRestBaseAddress(options.RestBaseUrl);
+            })
+            .AddHttpMessageHandler(sp =>
+            {
+                TradovateOptions options = sp.GetRequiredService<IOptions<TradovateOptions>>().Value;
+                options.Validate();
+                return new TradovateBasePathHandler(TradovateHttp.CreateRestBaseAddress(options.RestBaseUrl));
             })
             .AddHttpMessageHandler(sp => new AuthenticationHandler(sp.GetRequiredService<IAuthenticationService>()))
             .AddHttpMessageHandler(sp => new TradovateRetryHandler(sp.GetRequiredService<IOptions<TradovateOptions>>().Value.Retry));
@@ -86,11 +92,11 @@ public static class ServiceCollectionExtensions
     {
         TradovateOptions options = services.GetRequiredService<IOptions<TradovateOptions>>().Value;
         options.Validate();
-        var client = new HttpClient
+        Uri baseAddress = TradovateHttp.CreateRestBaseAddress(options.RestBaseUrl);
+        return new HttpClient(new TradovateBasePathHandler(baseAddress))
         {
-            BaseAddress = new Uri(options.RestBaseUrl),
+            BaseAddress = baseAddress,
         };
-        return client;
     }
 
     private static void OverlayEnvironment(TradovateOptions options)

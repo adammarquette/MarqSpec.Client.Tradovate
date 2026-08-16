@@ -388,6 +388,7 @@ public sealed class TradovateWebSocketClient : ITradovateWebSocketClient
         public async Task DisconnectAsync(CancellationToken cancellationToken)
         {
             _manualDisconnect = true;
+            FailPending("The Tradovate WebSocket disconnected before the request completed.");
             await StopLoopsAsync().ConfigureAwait(false);
             if (_transport is not null)
             {
@@ -450,37 +451,46 @@ public sealed class TradovateWebSocketClient : ITradovateWebSocketClient
         private async Task ConnectUnlockedAsync(Uri uri, bool replay, CancellationToken cancellationToken)
         {
             SetState(replay ? ConnectionState.Reconnecting : ConnectionState.Connecting);
-            await StopLoopsAsync().ConfigureAwait(false);
-            if (_transport is not null)
+            try
             {
-                await _transport.DisposeAsync().ConfigureAwait(false);
+                FailPending("The Tradovate WebSocket disconnected before the request completed.");
+                await StopLoopsAsync().ConfigureAwait(false);
+                if (_transport is not null)
+                {
+                    await _transport.DisposeAsync().ConfigureAwait(false);
+                }
+
+                _transport = _owner._transportFactory.Create();
+                await _transport.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
+
+                string? open = await _transport.ReceiveAsync(cancellationToken).ConfigureAwait(false);
+                if (open is null || FrameProtocol.Parse(open).Kind != FrameKind.Open)
+                {
+                    throw new TradovateApiException("The WebSocket did not send an open frame.");
+                }
+
+                string token = _isTrading
+                    ? await _owner._authentication.GetAccessTokenAsync(cancellationToken).ConfigureAwait(false)
+                    : await _owner._authentication.GetMarketDataAccessTokenAsync(cancellationToken).ConfigureAwait(false);
+
+                _lastServerActivity = DateTimeOffset.UtcNow;
+                _loopCts = new CancellationTokenSource();
+                _receiveLoop = Task.Run(() => ReceiveLoopAsync(_loopCts.Token), CancellationToken.None);
+                _heartbeatLoop = Task.Run(() => HeartbeatLoopAsync(_loopCts.Token), CancellationToken.None);
+
+                await InvokeAsync("authorize", token, cancellationToken).ConfigureAwait(false);
+                SetState(ConnectionState.Connected);
+                _owner._logger.LogInformation("Connected the {Socket} Tradovate socket", _isTrading ? "trading" : "market-data");
+
+                if (replay && !_isTrading)
+                {
+                    await _owner.ReplaySubscriptionsAsync(cancellationToken).ConfigureAwait(false);
+                }
             }
-
-            _transport = _owner._transportFactory.Create();
-            await _transport.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
-
-            string? open = await _transport.ReceiveAsync(cancellationToken).ConfigureAwait(false);
-            if (open is null || FrameProtocol.Parse(open).Kind != FrameKind.Open)
+            catch
             {
-                throw new TradovateApiException("The WebSocket did not send an open frame.");
-            }
-
-            string token = _isTrading
-                ? await _owner._authentication.GetAccessTokenAsync(cancellationToken).ConfigureAwait(false)
-                : await _owner._authentication.GetMarketDataAccessTokenAsync(cancellationToken).ConfigureAwait(false);
-
-            _lastServerActivity = DateTimeOffset.UtcNow;
-            _loopCts = new CancellationTokenSource();
-            _receiveLoop = Task.Run(() => ReceiveLoopAsync(_loopCts.Token), CancellationToken.None);
-            _heartbeatLoop = Task.Run(() => HeartbeatLoopAsync(_loopCts.Token), CancellationToken.None);
-
-            await InvokeAsync("authorize", token, cancellationToken).ConfigureAwait(false);
-            SetState(ConnectionState.Connected);
-            _owner._logger.LogInformation("Connected the {Socket} Tradovate socket", _isTrading ? "trading" : "market-data");
-
-            if (replay && !_isTrading)
-            {
-                await _owner.ReplaySubscriptionsAsync(cancellationToken).ConfigureAwait(false);
+                SetState(ConnectionState.Disconnected);
+                throw;
             }
         }
 
@@ -569,6 +579,7 @@ public sealed class TradovateWebSocketClient : ITradovateWebSocketClient
             catch (Exception ex)
             {
                 _owner._logger.LogError(ex, "The {Socket} socket heartbeat loop failed", _isTrading ? "trading" : "market-data");
+                RequestReconnect();
             }
         }
 
@@ -579,7 +590,7 @@ public sealed class TradovateWebSocketClient : ITradovateWebSocketClient
                 return;
             }
 
-            _ = ReconnectAsync();
+            _ = Task.Run(ReconnectAsync);
         }
 
         private async Task ReconnectAsync()
@@ -655,6 +666,20 @@ public sealed class TradovateWebSocketClient : ITradovateWebSocketClient
             _loopCts = null;
             _receiveLoop = null;
             _heartbeatLoop = null;
+        }
+
+        private void FailPending(string reason)
+        {
+            var exception = new IOException(reason);
+            foreach (int id in _pending.Keys)
+            {
+                if (_pending.TryRemove(id, out TaskCompletionSource<FramePayload>? completion))
+                {
+                    completion.TrySetException(exception);
+                }
+            }
+
+            _early.Clear();
         }
 
         private void SetState(ConnectionState state)

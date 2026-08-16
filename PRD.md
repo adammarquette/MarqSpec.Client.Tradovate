@@ -83,9 +83,11 @@ seam. *That* is where the interface is identical to ProjectX's. See `trading-cop
   Consumers derive practice-vs-live from it, so an ambiguous host is a safety defect rather than a convenience:
   a "demo" configuration that silently reaches the live host risks real money (R-14)
 - Thread-safe; supports concurrent API calls
-- **A failed call must never deserialize into a success.** ProjectX reports failure *in the payload*
-  (`success=false` on an otherwise healthy `200`). Confirm whether Tradovate does the same and, if so, check it
-  on every call and throw. A rejected order that looks placed is the highest-severity bug this library can ship.
+- **A failed call must never deserialize into a success.** Tradovate reports command outcome in the payload
+  (`failureReason` on an otherwise healthy `200`). Check it on every command and throw when it is not `Success`.
+  An ambiguous 200 — no `failureReason` and no confirming `orderId` (place) or `commandId` (modify / cancel /
+  liquidate) — is also a failure. A rejected order that looks placed is the highest-severity bug this library
+  can ship.
 - Rate limiting handled with automatic retry and exponential backoff (Polly), respecting Tradovate's rolling
   request budget
 - The WebSocket layer must encapsulate the frame protocol, heartbeat cadence, `requestId` correlation, and

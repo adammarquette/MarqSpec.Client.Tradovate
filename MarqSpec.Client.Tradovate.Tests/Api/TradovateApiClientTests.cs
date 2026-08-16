@@ -70,6 +70,105 @@ public sealed class TradovateApiClientTests
     }
 
     [Fact]
+    public async Task LiquidatePositionAsync_ShouldThrow_WhenCommandIdAndFailureReasonAreMissing()
+    {
+        ITradovateRestApi rest = A.Fake<ITradovateRestApi>();
+        A.CallTo(() => rest.LiquidatePositionAsync(A<LiquidatePosition>._, A<CancellationToken>._))
+            .Returns(new CommandResult());
+
+        TradovateApiClient client = CreateClient(rest);
+
+        Func<Task> act = () => client.LiquidatePositionAsync(new LiquidatePosition
+        {
+            AccountId = 1,
+            ContractId = 2,
+            Admin = false,
+        });
+
+        await act.Should().ThrowAsync<TradovateApiException>().WithMessage("*liquidatePosition*");
+    }
+
+    [Fact]
+    public async Task ModifyOrderAsync_ShouldThrow_WhenCommandIdAndFailureReasonAreMissing()
+    {
+        ITradovateRestApi rest = A.Fake<ITradovateRestApi>();
+        A.CallTo(() => rest.ModifyOrderAsync(A<ModifyOrder>._, A<CancellationToken>._))
+            .Returns(new CommandResult());
+
+        TradovateApiClient client = CreateClient(rest);
+
+        Func<Task> act = () => client.ModifyOrderAsync(new ModifyOrder
+        {
+            OrderId = 9,
+            OrderQty = 1,
+            OrderType = OrderType.Limit,
+            Price = 1m,
+        });
+
+        await act.Should().ThrowAsync<TradovateApiException>().WithMessage("*modifyOrder*");
+    }
+
+    [Fact]
+    public async Task CancelOrderAsync_ShouldThrow_WhenCommandIdAndFailureReasonAreMissing()
+    {
+        ITradovateRestApi rest = A.Fake<ITradovateRestApi>();
+        A.CallTo(() => rest.CancelOrderAsync(A<CancelOrder>._, A<CancellationToken>._))
+            .Returns(new CommandResult());
+
+        TradovateApiClient client = CreateClient(rest);
+
+        Func<Task> act = () => client.CancelOrderAsync(new CancelOrder { OrderId = 9 });
+
+        await act.Should().ThrowAsync<TradovateApiException>().WithMessage("*cancelOrder*");
+    }
+
+    [Fact]
+    public async Task PlaceOsoAsync_ShouldThrow_WhenOrderIdAndFailureReasonAreMissing()
+    {
+        ITradovateRestApi rest = A.Fake<ITradovateRestApi>();
+        A.CallTo(() => rest.PlaceOsoAsync(A<PlaceOso>._, A<CancellationToken>._))
+            .Returns(new PlaceOsoResult());
+
+        TradovateApiClient client = CreateClient(rest);
+
+        Func<Task> act = () => client.PlaceOsoAsync(new PlaceOso
+        {
+            AccountSpec = "DEMO",
+            Action = OrderAction.Buy,
+            Symbol = "ESM24",
+            OrderQty = 1,
+            OrderType = OrderType.Market,
+            IsAutomated = true,
+            Bracket1 = new RestrainedOrderVersion { Action = OrderAction.Sell, OrderType = OrderType.Limit, Price = 1m },
+        });
+
+        await act.Should().ThrowAsync<TradovateApiException>().WithMessage("*placeOSO*");
+    }
+
+    [Fact]
+    public async Task PlaceOcoAsync_ShouldThrow_WhenOrderIdAndFailureReasonAreMissing()
+    {
+        ITradovateRestApi rest = A.Fake<ITradovateRestApi>();
+        A.CallTo(() => rest.PlaceOcoAsync(A<PlaceOco>._, A<CancellationToken>._))
+            .Returns(new PlaceOcoResult());
+
+        TradovateApiClient client = CreateClient(rest);
+
+        Func<Task> act = () => client.PlaceOcoAsync(new PlaceOco
+        {
+            AccountSpec = "DEMO",
+            Action = OrderAction.Buy,
+            Symbol = "ESM24",
+            OrderQty = 1,
+            OrderType = OrderType.Market,
+            IsAutomated = true,
+            Other = new RestrainedOrderVersion { Action = OrderAction.Sell, OrderType = OrderType.Limit, Price = 1m },
+        });
+
+        await act.Should().ThrowAsync<TradovateApiException>().WithMessage("*placeOCO*");
+    }
+
+    [Fact]
     public async Task GetPositionsAsync_ShouldKeepSignedNetPos()
     {
         ITradovateRestApi rest = A.Fake<ITradovateRestApi>();

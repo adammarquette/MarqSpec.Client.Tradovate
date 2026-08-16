@@ -107,7 +107,7 @@ public sealed class TradovateApiClient : ITradovateApiClient
     public async Task<PlaceOrderResult> PlaceOrderAsync(PlaceOrder request, CancellationToken cancellationToken = default)
     {
         PlaceOrderResult result = await ExecuteAsync(() => _restApi.PlaceOrderAsync(request, cancellationToken), "order/placeorder").ConfigureAwait(false);
-        CommandResultGuard.EnsureSuccess(result.FailureReason, result.FailureText, result.OrderId, "placeOrder", requireOrderId: true);
+        CommandResultGuard.EnsureSuccess(result.FailureReason, result.FailureText, result.OrderId, "placeOrder", requireConfirmationId: true);
         return result;
     }
 
@@ -115,7 +115,7 @@ public sealed class TradovateApiClient : ITradovateApiClient
     public async Task<PlaceOsoResult> PlaceOsoAsync(PlaceOso request, CancellationToken cancellationToken = default)
     {
         PlaceOsoResult result = await ExecuteAsync(() => _restApi.PlaceOsoAsync(request, cancellationToken), "order/placeoso").ConfigureAwait(false);
-        CommandResultGuard.EnsureSuccess(result.FailureReason, result.FailureText, result.OrderId, "placeOSO", requireOrderId: true);
+        CommandResultGuard.EnsureSuccess(result.FailureReason, result.FailureText, result.OrderId, "placeOSO", requireConfirmationId: true);
         return result;
     }
 
@@ -123,7 +123,7 @@ public sealed class TradovateApiClient : ITradovateApiClient
     public async Task<PlaceOcoResult> PlaceOcoAsync(PlaceOco request, CancellationToken cancellationToken = default)
     {
         PlaceOcoResult result = await ExecuteAsync(() => _restApi.PlaceOcoAsync(request, cancellationToken), "order/placeoco").ConfigureAwait(false);
-        CommandResultGuard.EnsureSuccess(result.FailureReason, result.FailureText, result.OrderId, "placeOCO", requireOrderId: true);
+        CommandResultGuard.EnsureSuccess(result.FailureReason, result.FailureText, result.OrderId, "placeOCO", requireConfirmationId: true);
         return result;
     }
 
@@ -131,7 +131,7 @@ public sealed class TradovateApiClient : ITradovateApiClient
     public async Task<CommandResult> ModifyOrderAsync(ModifyOrder request, CancellationToken cancellationToken = default)
     {
         CommandResult result = await ExecuteAsync(() => _restApi.ModifyOrderAsync(request, cancellationToken), "order/modifyorder").ConfigureAwait(false);
-        CommandResultGuard.EnsureSuccess(result.FailureReason, result.FailureText, orderId: null, "modifyOrder");
+        CommandResultGuard.EnsureSuccess(result.FailureReason, result.FailureText, result.CommandId, "modifyOrder", requireConfirmationId: true);
         return result;
     }
 
@@ -139,7 +139,7 @@ public sealed class TradovateApiClient : ITradovateApiClient
     public async Task<CommandResult> CancelOrderAsync(CancelOrder request, CancellationToken cancellationToken = default)
     {
         CommandResult result = await ExecuteAsync(() => _restApi.CancelOrderAsync(request, cancellationToken), "order/cancelorder").ConfigureAwait(false);
-        CommandResultGuard.EnsureSuccess(result.FailureReason, result.FailureText, orderId: null, "cancelOrder");
+        CommandResultGuard.EnsureSuccess(result.FailureReason, result.FailureText, result.CommandId, "cancelOrder", requireConfirmationId: true);
         return result;
     }
 
@@ -165,7 +165,7 @@ public sealed class TradovateApiClient : ITradovateApiClient
     public async Task<CommandResult> LiquidatePositionAsync(LiquidatePosition request, CancellationToken cancellationToken = default)
     {
         CommandResult result = await ExecuteAsync(() => _restApi.LiquidatePositionAsync(request, cancellationToken), "order/liquidateposition").ConfigureAwait(false);
-        CommandResultGuard.EnsureSuccess(result.FailureReason, result.FailureText, orderId: null, "liquidatePosition");
+        CommandResultGuard.EnsureSuccess(result.FailureReason, result.FailureText, result.CommandId, "liquidatePosition", requireConfirmationId: true);
         return result;
     }
 

@@ -83,7 +83,94 @@ public sealed class TradovateWebSocketClientTests
         transport.Sent.Should().Contain(frame => frame.StartsWith("md/subscribeQuote\n", StringComparison.Ordinal) && frame.Contains("ESM24", StringComparison.Ordinal));
     }
 
+    [Fact]
+    public async Task SyncRequestAsync_ShouldThrow_WhenSocketDisconnectsBeforeReply()
+    {
+        var transport = new FakeWebSocketTransport();
+        transport.Enqueue("o");
+        transport.Enqueue("""a[{"i":1,"s":200,"d":{}}]""");
+        IAuthenticationService auth = A.Fake<IAuthenticationService>();
+        A.CallTo(() => auth.GetAccessTokenAsync(A<CancellationToken>._)).Returns("trade-token");
+
+        await using TradovateWebSocketClient client = CreateClient(auth, transport);
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        await client.ConnectTradingAsync(timeout.Token);
+
+        Task<SyncResult> sync = client.SyncRequestAsync(new SyncRequest { Users = [1] }, timeout.Token);
+        await WaitUntilAsync(() => transport.Sent.Any(frame => frame.StartsWith("user/syncrequest\n", StringComparison.Ordinal)), timeout.Token);
+        await client.DisconnectTradingAsync(timeout.Token);
+
+        await sync.Awaiting(task => task).Should().ThrowAsync<IOException>().WithMessage("*disconnected*");
+    }
+
+    [Fact]
+    public async Task ConnectTradingAsync_ShouldLeaveDisconnected_WhenTransportConnectThrows()
+    {
+        var transport = new FakeWebSocketTransport
+        {
+            ConnectFault = new IOException("refused"),
+        };
+        IAuthenticationService auth = A.Fake<IAuthenticationService>();
+        A.CallTo(() => auth.GetAccessTokenAsync(A<CancellationToken>._)).Returns("trade-token");
+
+        await using TradovateWebSocketClient client = CreateClient(auth, transport);
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+
+        await client.Awaiting(c => c.ConnectTradingAsync(timeout.Token)).Should().ThrowAsync<IOException>();
+        client.TradingState.Should().Be(ConnectionState.Disconnected);
+    }
+
+    [Fact]
+    public async Task HeartbeatLoop_ShouldReconnect_WhenHeartbeatSendFails()
+    {
+        var first = new FakeWebSocketTransport
+        {
+            SendFault = message => message == FrameProtocol.HeartbeatBody ? new IOException("send failed") : null,
+        };
+        first.Enqueue("o");
+        first.Enqueue("""a[{"i":1,"s":200,"d":{}}]""");
+
+        var second = new FakeWebSocketTransport();
+        second.Enqueue("o");
+        second.Enqueue("""a[{"i":2,"s":200,"d":{}}]""");
+
+        IAuthenticationService auth = A.Fake<IAuthenticationService>();
+        A.CallTo(() => auth.GetAccessTokenAsync(A<CancellationToken>._)).Returns("trade-token");
+        var factory = new FakeWebSocketTransportFactory(first, second);
+
+        await using TradovateWebSocketClient client = CreateClient(
+            auth,
+            factory,
+            heartbeatInterval: TimeSpan.FromMilliseconds(20),
+            serverSilenceTimeout: TimeSpan.FromHours(1));
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        await client.ConnectTradingAsync(timeout.Token);
+
+        await WaitUntilAsync(() => factory.Created >= 2, timeout.Token);
+        await WaitUntilAsync(() => client.TradingState == ConnectionState.Connected, timeout.Token);
+
+        factory.Created.Should().BeGreaterThanOrEqualTo(2);
+        client.TradingState.Should().Be(ConnectionState.Connected);
+    }
+
     private static TradovateWebSocketClient CreateClient(IAuthenticationService auth, FakeWebSocketTransport transport)
+    {
+        return CreateClient(auth, new FakeWebSocketTransportFactory(transport));
+    }
+
+    private static async Task WaitUntilAsync(Func<bool> condition, CancellationToken cancellationToken)
+    {
+        while (!condition())
+        {
+            await Task.Delay(10, cancellationToken);
+        }
+    }
+
+    private static TradovateWebSocketClient CreateClient(
+        IAuthenticationService auth,
+        FakeWebSocketTransportFactory factory,
+        TimeSpan? heartbeatInterval = null,
+        TimeSpan? serverSilenceTimeout = null)
     {
         var options = Options.Create(new TradovateOptions
         {
@@ -94,8 +181,8 @@ public sealed class TradovateWebSocketClientTests
             MarketDataSocketUrl = "wss://md.tradovateapi.com/v1/websocket",
             WebSocket = new WebSocketOptions
             {
-                HeartbeatInterval = TimeSpan.FromHours(1),
-                ServerSilenceTimeout = TimeSpan.FromHours(1),
+                HeartbeatInterval = heartbeatInterval ?? TimeSpan.FromHours(1),
+                ServerSilenceTimeout = serverSilenceTimeout ?? TimeSpan.FromHours(1),
             },
         });
 
@@ -103,6 +190,6 @@ public sealed class TradovateWebSocketClientTests
             auth,
             options,
             A.Fake<ILogger<TradovateWebSocketClient>>(),
-            new FakeWebSocketTransportFactory(transport));
+            factory);
     }
 }

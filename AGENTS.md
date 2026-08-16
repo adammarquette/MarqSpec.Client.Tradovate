@@ -42,6 +42,7 @@ door.** [`PRD.md`](PRD.md) owns product requirements. The official protocol orac
 - **Host is the environment.** Required `RestBaseUrl` / socket URLs, no default, no live fallback. Surface the
   configured host. Never infer practice from an account name.
 - **Failure can hide in a 200.** Check `failureReason` on every command. A rejected place/liquidate must throw.
+  An ambiguous 200 (no `failureReason` and no confirming `orderId` / `commandId`) is also a failure — fail closed.
 - **Absent ≠ zero.** If a quote has no bid/ask size, leave it null.
 - **Check the units.** Expose product `valuePerPoint` and `tickSize` as Tradovate returns them. Do not assume
   ProjectX's `PointValue = TickValue / TickSize`.

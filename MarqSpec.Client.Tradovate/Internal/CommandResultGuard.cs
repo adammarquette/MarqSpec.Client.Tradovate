@@ -11,9 +11,9 @@ internal static class CommandResultGuard
     public static void EnsureSuccess(
         FailureReason? failureReason,
         string? failureText,
-        long? orderId,
+        long? confirmationId,
         string operation,
-        bool requireOrderId = false)
+        bool requireConfirmationId = false)
     {
         if (failureReason is { } reason && reason != FailureReason.Success)
         {
@@ -24,10 +24,10 @@ internal static class CommandResultGuard
                 failureReason: reason);
         }
 
-        if (requireOrderId && orderId is null)
+        if (requireConfirmationId && confirmationId is null)
         {
             throw new TradovateApiException(
-                $"{operation} returned no order id and no success failureReason.",
+                $"{operation} returned no confirmation id and no success failureReason.",
                 statusCode: 200,
                 failureReason: failureReason);
         }

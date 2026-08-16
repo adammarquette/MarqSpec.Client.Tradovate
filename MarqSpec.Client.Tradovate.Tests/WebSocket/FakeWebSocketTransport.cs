@@ -12,10 +12,19 @@ internal sealed class FakeWebSocketTransport : IWebSocketTransport
 
     public Uri? ConnectedUri { get; private set; }
 
+    public Exception? ConnectFault { get; set; }
+
+    public Func<string, Exception?>? SendFault { get; set; }
+
     public IReadOnlyList<string> Sent => _sent;
 
     public Task ConnectAsync(Uri uri, CancellationToken cancellationToken)
     {
+        if (ConnectFault is not null)
+        {
+            throw ConnectFault;
+        }
+
         ConnectedUri = uri;
         IsConnected = true;
         return Task.CompletedTask;
@@ -23,6 +32,11 @@ internal sealed class FakeWebSocketTransport : IWebSocketTransport
 
     public Task SendAsync(string message, CancellationToken cancellationToken)
     {
+        if (SendFault?.Invoke(message) is { } fault)
+        {
+            throw fault;
+        }
+
         _sent.Add(message);
         return Task.CompletedTask;
     }
