@@ -7,6 +7,11 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/Dotnet.gitignore
 
+# Agent workspace -- git worktrees. Each entry is an embedded git repo, so a `git add -A` would
+# commit one as a gitlink (a bare commit SHA with no .gitmodules entry) that clones as an empty
+# directory nobody can explain. Matches trading-copilot, which shares this file's base.
+.worktrees/
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
