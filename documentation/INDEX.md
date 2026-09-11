@@ -15,6 +15,7 @@ This library is a **Tradovate-native** client. Venue-neutrality lives in trading
 | [PRD.md](../PRD.md) | Product requirements, user stories, safety rules, out of scope |
 | [AGENTS.md](../AGENTS.md) | Agent contract, coding standards, test-first, client-side safety rules |
 | [CONTRIBUTING.md](../CONTRIBUTING.md) | Branch ladder, Conventional Commits, same-PR docs rule |
+| [agents/README.md](agents/README.md) | Role-contract index — reviewer and platform, loaded on demand |
 | [LICENSE](../LICENSE) | MIT licence |
 
 ## ID namespaces

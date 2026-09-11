@@ -34,8 +34,8 @@ Example: `feature/41_tradovate-client`.
 [Conventional Commits](https://www.conventionalcommits.org/). AI-authored changes carry **both** trailers:
 
 ```
-Assisted-by: Cursor Grok 4.6
-Co-Authored-By: Cursor Grok 4.6 <cursor@cursor.com>
+Assisted-by: Cursor Grok 4.6 (Cursor)
+Co-Authored-By: Cursor Grok 4.6 <noreply@anthropic.com>
 ```
 
 Commit *type* drives SemVer (`feat` → minor, `fix` → patch, `BREAKING CHANGE` → major).
@@ -50,7 +50,10 @@ A PR whose change touches documented behavior updates [`README.md`](README.md) a
 ```bash
 dotnet format MarqSpec.Client.Tradovate.slnx --verify-no-changes
 dotnet test --filter "Category!=Integration"
+./scripts/check-doc-links.sh
 ```
 
 PRs target `develop` and cite the tracking issue (`Closes` / `Related to`
-[trading-copilot#41](https://github.com/adammarquette/trading-copilot/issues/41)).
+[trading-copilot#41](https://github.com/adammarquette/trading-copilot/issues/41) or the
+current two-repo card). Demo-host integration (`Category=Integration`) needs operator
+`TRADOVATE_*` credentials and is not a required CI check.

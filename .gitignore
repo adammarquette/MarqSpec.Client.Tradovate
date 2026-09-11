@@ -39,6 +39,10 @@ ScaffoldingReadMe.txt
 # dotenv environment variables file
 .env
 
+# Coverage / test output (collected locally and in CI)
+TestResults/
+coverage/
+
 # Others
 ~$*
 *~
