@@ -75,6 +75,7 @@ Target framework: **.NET 10.0 only**.
 dotnet build MarqSpec.Client.Tradovate.slnx
 dotnet format MarqSpec.Client.Tradovate.slnx --verify-no-changes
 dotnet test --filter "Category!=Integration"
+./scripts/check-doc-links.sh
 ```
 
 Integration tests run against the **demo host only** and require credentials supplied via environment:

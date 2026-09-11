@@ -14,6 +14,16 @@ Venue-neutrality is the **adapter's** job in [trading-copilot](https://github.co
 (`TradovateVenue : ITradingVenue`). Tracking issue:
 [trading-copilot#41](https://github.com/adammarquette/trading-copilot/issues/41).
 
+## Take your role's contract first
+
+| If you are… | Read first | How it loads |
+|---|---|---|
+| writing library code or unit tests | this file | on your first read in the tree |
+| **reviewing any change** | [`agents/code-reviewer.md`](documentation/agents/code-reviewer.md) | **open it yourself** |
+| **touching CI/CD, packaging, or rulesets** | [`agents/platform.md`](documentation/agents/platform.md) | **open it yourself** |
+
+Reviewer and Platform never auto-load.
+
 ## Source of truth (read before coding)
 
 **Start at [`README.md`](README.md), then [`documentation/INDEX.md`](documentation/INDEX.md) — the wiki's front
